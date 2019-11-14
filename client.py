@@ -1,5 +1,10 @@
 #import arcade
+import time
+import os
+from network import network
 
+width = 1000
+height = 1000
 
 class Player:
     def __init__(self, player_id, colour, name, board): 
@@ -70,7 +75,7 @@ class Square:
 
 class Board:
 
-    def __init__(self, players, colours=None):
+    def __init__(self, players = None, colours=None):
         self.players = players
         self.colours = colours
         self.board = self.make_board(players)
@@ -99,9 +104,17 @@ class Die:
 
         pass
 
-
 def main():
-    pass
+	run = True
+	n = network()
+	playerNo = n.getPlayer()
+	b = Board(4)
+	clientNo = n.connect()
+	p = Player(clientNo, 244, 'blah', b)
+	while run:
+		time.sleep(2)
+
+		
 
 if __name__ == "__main__":
-    main()
+	main()
