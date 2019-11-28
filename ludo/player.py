@@ -146,7 +146,7 @@ class Square:
 
 		
 def main():
-
+	
 	Player.player_count = 4
     print ("Setting up board...")
     b = Board(4)
