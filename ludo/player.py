@@ -61,6 +61,7 @@ class Step:
     def __repr__(self):
         return self.val.__repr__()
     
+	
 class Piece:
 
     def __init__(self, owner_id, piece_id, b):
@@ -68,6 +69,7 @@ class Piece:
         self.piece_id = piece_id
         self.board = b
         self.path = self.generate_path()
+		
     def generate_path(self):
         i = 2 + self.owner_id * 13
         step = Step(self.board.board[0][self.owner_id][self.piece_id])
@@ -103,6 +105,7 @@ class Piece:
     def __repr__(self):
         return "({};{})".format(self.owner_id, self.piece_id)
 
+		
 class Die:
 
     def __init__(self, sides=6):
@@ -114,11 +117,10 @@ class Die:
         
 class Board:
 
-    def __init__(self):
-        self.board = self.make_board()
+    def __init__(self, players):
+        self.board = self.make_board(players)
 
-    def make_board(self):
-        players = Player.player_count
+    def make_board(self, players):
         b = [[[Square("start_square") for i in range(4)] for j in range(players)]]
         
         b.append([Square("general_square") for i in range(13) for j in range(players)])
@@ -126,16 +128,13 @@ class Board:
         b.append([[Square("end_squares") for i in range(5)] for j in range(players)])
         
         return b
-
-    def set_board(self, players):
-        for i in players.pieces:
-            pass
             
     def display(self):
         for i in self.board:
             print (i)
             print ()
             print ()
+
 
 class Square:
 
@@ -145,39 +144,21 @@ class Square:
     def __repr__(self):
         return self.contents.__repr__()
 
+		
 def main():
-    Player.player_count = 4
+
+	Player.player_count = 4
     print ("Setting up board...")
-    b = Board()
-    print (type(b), id(b))
+    b = Board(4)
     Player.player_count = 0
+	
     print ("Setting up 4 players and their pieces...")
-    players = [Player(b) for i in range(4)]
+    players = [Player(b), Player(b), Player(b), Player(b)]
     print ("Setting up Die...")
     die = Die()
     print ("First player takes his turn...")
     p = 10
-    i = 0
-    while p > 0:
-        b.display()
-        print ("--"*50)
-        players[i].play(die)
-        p -= 1
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+	players[i].play(die)
     
 if __name__ == "__main__":
     main()
