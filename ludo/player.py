@@ -1,4 +1,9 @@
+import time
+import os
+from network import network
 from random import randint
+
+moves = []
 
 class Player:
 
@@ -15,16 +20,17 @@ class Player:
         i = 0
         while i < 3 and goes > 0:
             piece = self.pieces[randint(0,3)]
-            if i == 0:
-                roll = 6
-            else:
-                roll = die.roll()
+            roll = die.roll()
+
             print (roll)
             if roll == 6 and piece.in_prison():
+                moves.append(6)
                 piece.move(1)
             elif roll == 6:
-                 piece.move(6)
+                moves.append(6)
+                piece.move(6)
             else:
+                moves.append(roll)
                 piece.move(roll)
                 goes -= 1
             i += 1
@@ -32,8 +38,6 @@ class Player:
     def get_player_id(self):
         return self.player_id
     
-    def quit(self):
-        quit()
     
 
 class Step:
@@ -99,11 +103,14 @@ class Piece:
         if self.path.look_forward(steps):
             for i in range(steps):
                 self.path = self.path.next
-        start.val.contents = "OLD"
+        start.val.contents = self.__repr__()
         self.path.val.contents = piece
         
     def __repr__(self):
         return "({};{})".format(self.owner_id, self.piece_id)
+
+    def __repr__1(self):
+        return "'blah'"
 
 		
 class Die:
@@ -128,12 +135,10 @@ class Board:
         b.append([[Square("end_squares") for i in range(5)] for j in range(players)])
         
         return b
-            
+
     def display(self):
         for i in self.board:
             print (i)
-            print ()
-            print ()
 
 
 class Square:
@@ -144,21 +149,39 @@ class Square:
     def __repr__(self):
         return self.contents.__repr__()
 
-		
 def main():
-	
-	Player.player_count = 4
+    run = True
+    n = network()
+    clientNo = n.getBo()
+    print(clientNo)
+    #p = player.Player(clientNo, 244, 'blah', b)
     print ("Setting up board...")
+    #player.Player_count = 0
+    print("Setting up 4 players and their pieces...")
     b = Board(4)
-    Player.player_count = 0
-	
-    print ("Setting up 4 players and their pieces...")
     players = [Player(b), Player(b), Player(b), Player(b)]
-    print ("Setting up Die...")
+    print("Setting up Die...")
     die = Die()
-    print ("First player takes his turn...")
-    p = 10
-	players[i].play(die)
-    
+    print("First player takes his turn...")
+    while run:
+        while True:
+            re = n.getBo()
+            re = n.send(re)
+            if re == "br":
+                break
+            print(re)
+            time.sleep(1)
+        keyboard = input("roll board or quit: \n")
+        if keyboard == "roll":
+            global moves
+            players[clientNo].play(die)
+            print(moves)
+            roll = n.send(moves)
+            moves = []
+        if keyboard == "board":
+            b.display()
+        if keyboard == "quit":
+            quit()
+
 if __name__ == "__main__":
     main()

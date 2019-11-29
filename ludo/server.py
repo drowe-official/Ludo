@@ -1,9 +1,11 @@
+import time
 import socket
 from _thread import *
 import sys
 import pickle
+import player
 
-server = "10.216.20.212" # IPV4 ADDR HERE 192.168.10.64 10.216.20.212
+server = "10.216.27.161" # IPV4 ADDR HERE 192.168.10.64 10.216.20.212 10.216.27.161
 port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,35 +20,40 @@ s.listen(4) #up to 6 connections
 
 print("Started server, Waiting for connection")
 
-#store piece starting positions and changes
-#pos = [[(,)(,)(,)(,)],[(,)(,)(,)(,)],[(,)(,)(,)(,)],[(,)(,)(,)(,)]]
-#list of tuples
+currentPlayer = 0
 
-def threaded_client(conn, player):
-	reply = ""
-	conn.send(str.encode("Connected"))
+mover = 0
+
+clients = []
+
+
+def threaded_client(conn, curr):
+	data = []
+	conn.send(pickle.dumps(curr))
 	while True:
-		try:
-			data = pickle.loads(conn.recv(2048))
-			pos[currentPlayer] = data
-			if not data:
-				print("Disconnected")
-				break
+		reply = [[], [], [], []]
+		time.sleep(2)
+		reply[curr] = []
+		data = pickle.loads(conn.recv(16000))
+		reply[curr] = data
+		global mover
+		if not isinstance(data, int):
+			print(reply)
+			for cli in clients:
+				cli.send(pickle.dumps(reply))
+			if mover == 3:
+				mover = 0
 			else:
-				reply = pos
-				print("Received: ", data)
-				print("Sending: ", reply)
-			conn.sendall(pickle.dumps(reply))
-		except:
-			break
+				mover = curr + 1
+		if mover == curr:
+			print("br")
+			conn.send(pickle.dumps("br"))
 	print("Lost connection")
 	conn.close()
 
-currentPlayer = 0
 while True:
 	conn, addr = s.accept()
 	print("Connected to: ", addr)
-	conn.send(pickle.dumps(currentPlayer))
-
+	clients.append(conn)
 	start_new_thread(threaded_client, (conn, currentPlayer))
 	currentPlayer += 1
