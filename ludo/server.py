@@ -1,59 +1,63 @@
-import time
 import socket
-from _thread import *
-import sys
-import pickle
-import player
-
-server = "10.216.27.161" # IPV4 ADDR HERE 192.168.10.64 10.216.20.212 10.216.27.161
-port = 5555
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-try:
-	s.bind((server, port)) # 
-
-except socket.error as e:
-	str(e)
-
-s.listen(4) #up to 6 connections 
-
-print("Started server, Waiting for connection")
-
-currentPlayer = 0
-
-mover = 0
-
-clients = []
+import threading
+import time
+      
+class Server:
 
 
-def threaded_client(conn, curr):
-	data = []
-	conn.send(pickle.dumps(curr))
-	while True:
-		reply = [[], [], [], []]
-		time.sleep(2)
-		reply[curr] = []
-		data = pickle.loads(conn.recv(16000))
-		reply[curr] = data
-		global mover
-		if not isinstance(data, int):
-			print(reply)
-			for cli in clients:
-				cli.send(pickle.dumps(reply))
-			if mover == 3:
-				mover = 0
-			else:
-				mover = curr + 1
-		if mover == curr:
-			print("br")
-			conn.send(pickle.dumps("br"))
-	print("Lost connection")
-	conn.close()
-
-while True:
-	conn, addr = s.accept()
-	print("Connected to: ", addr)
-	clients.append(conn)
-	start_new_thread(threaded_client, (conn, currentPlayer))
-	currentPlayer += 1
+    def __init__(self, ip, port):
+        self.socket = None
+        self.clients = []
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((ip, port))
+        self.socket.listen()
+        
+    def listen(self, player_amount): # listen for player_amount connections
+        self.socket.listen(player_amount)
+        for i in range(player_amount):
+            conn, addr = self.socket.accept()
+            conn.setblocking(0)
+            self.clients.append(conn)
+        self.socket.setblocking(0)
+        self.broadcast("all clients in")
+        self.receive()
+        
+    def send(self, client, msg): # send message to specific client
+        print ("sending", msg, "to", client)
+        client.sendall(msg.encode("utf-8"))
+        
+    def broadcast(self, msg): #send msg to all connections on server
+        print ("broadcasting", msg)
+        i = 0
+        for client in self.clients:
+            i += 1
+            client.sendall(msg.encode("utf-8"))
+        
+    def receive(self): #receive list of messages from connections connected to server
+        msg = b""
+        for client in self.clients:
+            try:
+                while True:
+                    data = client.recv(1024)
+                    msg += data
+            except socket.error:
+                continue
+        return msg.decode("utf-8")
+        
+        
+        
+def create_server(ip_addr, port, players):
+    server = Server(ip_addr, port)
+    server.listen(players)
+    i = 0
+    while True:
+        messages = server.receive() # receive messages from active connections
+        server.broadcast(str(i))
+        i += 1
+        time.sleep(1)
+            
+            
+if __name__ == "__main__":
+    h = "127.0.0.1"
+    p = 65432
+    create_server(h, p, 2)

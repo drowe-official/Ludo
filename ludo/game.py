@@ -1,68 +1,82 @@
-from arcade.gui import *
+import server
+import client
 import player
+inp = input("host or client\n")
+ip = "127.0.0.1"
+port = 65432
 
-class HostButton(TextButton):
-    def __init__(self, ludo, x=0, y=0, width=100, height=40, text="Host",face_color=None, theme=None):
-        super().__init__(x, y, width, height, text, theme=theme)
-        self.ludo = ludo
-
-    def on_press(self):
-        self.pressed = True
-        print("Host the Ludo")
-        player.main()
-
-class JoinButton(TextButton):
-    def __init__(self, ludo, x=0, y=0, width=100, height=40, text="Connect", theme=None):
-        super().__init__(x, y, width, height, text, theme=theme)
-        self.ludo = ludo
-
-    def on_press(self):
-        self.pressed = True
-        print("Joining Ludo..")
-        connect.main()
-
-class QuitButton(TextButton):
-    def __init__(self, ludo, x=0, y=0, width=100, height=40, text="Quit", theme=None):
-        super().__init__(x, y, width, height, text, theme=theme)
-        self.ludo = ludo
-
-    def on_press(self):
-        self.pressed = True
-        print("Quitting..")
-        exit()
-
-class Ludo(arcade.Window):
-    def __init__(self):
-        super().__init__(900, 900, "Ludo")
-        arcade.set_background_color(arcade.color.BUBBLES)
-
-    def bt(self):
-        start = "start.png"
-        self.theme.add_button_textures(start, start, start, start)
-
-    def layout(self):
-        self.theme = Theme()
-        self.theme.set_font(30, arcade.color.WHITE)
-        self.bt()
-
-    def buttons(self):
-        self.button_list.append(HostButton(self, 450, 680, 310, 150, theme=self.theme))
-        self.button_list.append(JoinButton(self, 450, 525, 310, 150, theme=self.theme))
-        self.button_list.append(QuitButton(self, 450, 360, 310, 150, theme=self.theme))
-
-    def start(self):
-        self.layout()
-        self.buttons()
-
-    def on_draw(self):
-        arcade.start_render()
-        super().on_draw()
+def pickle_turn(player_id, rolls):
+    string = "{}|{}".format(player_id, "|".join(map(str, rolls)))
+    return string
+    
+def unpickle_turn(string):
+    tokens = string.split("|")
+    player_id = int(tokens[0])
+    rolls = [int(roll) for roll in tokens[1:]]
+    return (player_id, rolls)
+    
+    
+if inp == "host":
+    HOST_ID = 0
+    host = server.Server(ip, port) # make host
+    PLAYER_COUNT = int(input("Number of players: ")) # get no. of players
+    host.listen(PLAYER_COUNT-1) # hold until server gets N connections
+    
+    for client_id, client in enumerate(host.clients): # send players their ids
+        host.send(client, str(client_id+1))
+    host.broadcast(str(PLAYER_COUNT)) # broadcasts total players
+    
+    
+    b = player.Board(PLAYER_COUNT)
+    players = [player.Player(b, i) for i in range(PLAYER_COUNT)]
+    die = player.Die()
+    player_id = HOST_ID
+    while True:
+        if player_id: # deal with clients
+            while True:
+                pickled = host.receive()
+                if pickled:
+                    break
+            print ("received moves for another player", pickled)
+        else: # host's turn
+            if input() == "r":
+                print ("taking my turn")
+                rolls =  die.get_rolls()
+                pickled = pickle_turn(HOST_ID, rolls)
+            
+        host.broadcast(pickled)
+        player_id, rolls = unpickle_turn(pickled)
+        players[player_id].play(rolls)
+        b.display()
+        player_id = (player_id + 1) % PLAYER_COUNT
 
 
-def main():
-    ludo = Ludo()
-    ludo.start()
-    arcade.run()
+elif inp == "client":
 
-if __name__ == "__main__":
-    main()
+    client = client.Client()
+    client.connect(ip, port)
+    CLIENT_ID = int(client.receive())
+    PLAYER_COUNT = int(client.receive())
+    b = player.Board(PLAYER_COUNT)
+    players = [player.Player(b, i) for i in range(PLAYER_COUNT)]
+    die = player.Die()
+    
+    player_id = 0
+    while True:
+        if player_id == CLIENT_ID: #if its their turn
+            if input() == "r":
+                print ("taking my turn")
+                rolls = die.get_rolls()
+                pickled = pickle_turn(CLIENT_ID, rolls)
+                client.send(pickled)
+        else: #if they receive someone else's turn from the server
+            pickled = client.receive()
+            print ("received moves for another player", pickled)
+        print (pickled)    
+        player_id, rolls = unpickle_turn(pickled)
+        players[player_id].play(rolls)
+        b.display()
+        player_id = (player_id + 1) % PLAYER_COUNT
+
+else:
+    quit()
