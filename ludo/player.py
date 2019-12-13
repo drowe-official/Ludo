@@ -124,12 +124,120 @@ class Board:
         self.board = self.make_board(player_count)
 
     def make_board(self, players):
-        b = [[[Square("start_square") for i in range(4)] for j in range(players)]]
-        
-        b.append([Square("general_square") for i in range(13) for j in range(players)])
+        width = 66 
+        newsquare = [100, 103] 
+        b = []
+        b.append([])
+        for j in range(players):
+            b[0].append([])
+            if j == 0:
+                for i in range(4):
+                    b[0][0].append(Square("start_square", newsquare))
+                    newsquare[1] += width
+                newsquare = [896,107]
 
-        b.append([[Square("end_squares") for i in range(5)] for j in range(players)])
-        
+
+            elif j == 1:
+                for i in range(4):
+                    b[0][1].append(Square("start_square", newsquare))
+                    newsquare[0] -= width
+                newsquare = [900,893]
+
+            elif j == 2:
+                for i in range(4):
+                    b[0][2].append(Square("start_square", newsquare))
+                    newsquare[1] -= width
+                newsquare = [102, 895]
+
+            elif j == 3:
+                for i in range(4):
+                    b[0][3].append(Square("start_square", newsquare))
+                    newsquare[0] += width
+                newsquare = [33, 466]
+        b.append([])
+
+        for j in range(players):
+            if j == 0:
+                b[1].append(Square("general_square", newsquare))
+                newsquare[1] -= width
+                for i in range(6):
+                    b[1].append(Square("general_square", newsquare))
+                    newsquare[0] += width
+                newsquare[0] += width
+                newsquare[1] -= width
+                for i in range(6):
+                    b[1].append(Square("general_square", newsquare))
+                    newsquare[1] -= width
+                newsquare[0] += 66
+
+
+            elif j == 1:
+                b[1].append(Square("general_square", newsquare))
+                newsquare[0] += width
+                for i in range(6):
+                    b[1].append(Square("general_square", newsquare))
+                    newsquare[1] -= width
+                newsquare[0] += width
+                newsquare[1] += width
+                for i in range(6):
+                    b[1].append(Square("general_square", newsquare))
+                    newsquare[0] += width
+                newsquare[1] += 66
+
+            elif j == 2:
+                b[1].append(Square("general_square", newsquare))
+                newsquare[1] += width
+                for i in range(6):
+                    b[1].append(Square("general_square", newsquare))
+                    newsquare[0] -= width
+                newsquare[0] -= width
+                newsquare[1] += width
+                for i in range(6):
+                    b[1].append(Square("general_square", newsquare))
+                    newsquare[1] += width
+                newsquare[0] -= 66
+
+            elif j == 3:
+                b[1].append(Square("general_square", newsquare))
+                newsquare[0] -= width
+                for i in range(6):
+                    b[1].append(Square("general_square", newsquare))
+                    newsquare[1] -= width
+                newsquare[0] -= width
+                newsquare[1] -= width
+                for i in range(6):
+                    b[1].append(Square("general_square", newsquare))
+                    newsquare[0] -= width
+                newsquare[0] += 66
+        b.append([])
+
+        for j in range(players):
+            b[2].append([])
+            if j == 0:
+                newsquare = [66,499]
+                for i in range(5):
+                    b[2][0].append(Square("end_squares", newsquare))
+                    newsquare[0] += width
+                newsquare = [495,103]
+
+
+            elif j == 1:
+                for i in range(5):
+                    b[2][1].append(Square("end_squares", newsquare))
+                    newsquare[1] += width
+                newsquare = [957,499]
+
+            elif j == 2:
+                for i in range(5):
+                    b[2][2].append(Square("end_squares", newsquare))
+                    newsquare[0] -= width
+                newsquare = [951, 505]
+
+            elif j == 3:
+                for i in range(5):
+                    b[2][3].append(Square("end_squares", newsquare))
+                    newsquare[1] -= width
+                
         return b
 
     def display(self):
@@ -140,8 +248,11 @@ class Board:
 class Square:
 
 
-    def __init__(self, contents):
+    def __init__(self, contents, xy):
         self.contents = contents
+        self.xy = xy
         
     def __repr__(self):
         return self.contents.__repr__()
+
+#p = Player()
